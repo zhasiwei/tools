@@ -3,6 +3,7 @@ package com.zsw.tools.utils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,12 +46,12 @@ public class CommonUtil {
 	private static void initPropertyMap() {
 		PROPERTYMAP = new HashMap<String, String>();
 		SQL_PROPERTYMAP = new HashMap<String, String>();
-		initFilePrefix();
-		String filePath = FILE_PREFIX + FILE_NAME;
+//		initFilePrefix();
+//		String filePath = CommonUtil.class.getResource(FILE_NAME).getPath();
 		System.out.println("==========================初始化配置文件==========================");
-		System.out.println("==========================文件路径：" + filePath + "==========================");
+		System.out.println("==========================文件路径：" + FILE_NAME + "==========================");
 	
-		File file = new File(filePath);
+		File file = new File(FILE_NAME);
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			String str = null;
@@ -90,6 +91,8 @@ public class CommonUtil {
 	
 	// 初始化文件路径前缀
 	private static void initFilePrefix() {
+		System.out.println(CommonUtil.class);
+		System.out.println(CommonUtil.class.getResource("/").getPath());
 		File f = new File(CommonUtil.class.getResource("/").getPath()); 
 		String currentAbsPath = f.getAbsolutePath();
 		FILE_PREFIX = currentAbsPath.substring(0, currentAbsPath.indexOf("zswTools"));

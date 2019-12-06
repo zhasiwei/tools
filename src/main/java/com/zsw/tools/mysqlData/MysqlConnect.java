@@ -1,4 +1,4 @@
-package com.zsw.tools.data;
+package com.zsw.tools.mysqlData;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -23,7 +23,7 @@ public class MysqlConnect {
 			String user = preportyMap.get("mysql.username");
 			String password = preportyMap.get("mysql.password");
 			
-			String url = "jdbc:mysql://" + host + ":" + port + "/" + database;
+			String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useUnicode=true&characterEncoding=utf8";
 			connection = DriverManager.getConnection(url, user, password);
 		} catch (SQLException e) {
 			System.out.println("获取数据库连接失败");

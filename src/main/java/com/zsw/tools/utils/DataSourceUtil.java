@@ -18,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
 import com.zsw.tools.mysqlData.MysqlConnect;
+import com.zsw.tools.utils.data.SubTableRelaBean;
 import com.zsw.tools.utils.data.TableBean;
 
 public class DataSourceUtil implements javax.sql.DataSource{
@@ -123,6 +124,21 @@ public class DataSourceUtil implements javax.sql.DataSource{
 	public static void prepareAndBackTableData(TableBean table) throws SQLException {
 		String tableName = table.getTargeTableName();
 		String querySql = table.getQuerySql();
+		// 准备主表数据
+		prepareSql(tableName, querySql);
+		// 处理关联子表
+		if(CommonUtil.isNotEmpty(table.getSubTableList())) {
+			String subQuerySql;
+			for(SubTableRelaBean subTable : table.getSubTableList()) {
+				subQuerySql = "select * from " + subTable.getSubTableName() + " s, " + table.getTargeTableName() + " m where m."
+						+ subTable.getMainTableColumn() + " = s." + subTable.getSubsTableColumn(); 
+				prepareSql(subTable.getSubTableName(), subQuerySql);
+				subQuerySql = null;
+			}
+		}
+	}
+	
+	private static void prepareSql(String tableName, String querySql) throws SQLException {
 		String tempName = new DataSourceUtil().createTable(tableName);
 		
 		List<String> insertSqlList = new ArrayList<String>();
@@ -219,7 +235,6 @@ public class DataSourceUtil implements javax.sql.DataSource{
 			}
 			
 		}
-		
 	}
 	
 	public static void deleteData(String tableName) throws SQLException {

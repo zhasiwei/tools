@@ -6,22 +6,23 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import com.zsw.tools.utils.CommonUtil;
+import com.zsw.tools.utils.PropertyUtil;
 
 public class MysqlConnect {
 
 	public static Connection getConnection() {
 		Connection connection = null;
 		try {
-			Map<String, String> preportyMap = CommonUtil.getPropertyMap();
+			Map<String, String> preportyMap = PropertyUtil.PROPERTYMAP;
 			if(CommonUtil.isEmpty(preportyMap)) {
 				System.out.println("=======ERROR:配置信息为空");
 			}
 			
-			String host = preportyMap.get("mysql.host");
-			String port = preportyMap.get("mysql.port");
-			String database = preportyMap.get("mysql.database");
-			String user = preportyMap.get("mysql.username");
-			String password = preportyMap.get("mysql.password");
+			String host = PropertyUtil.getMysqlUtil().host;
+			String port = PropertyUtil.getMysqlUtil().port;
+			String database = PropertyUtil.getMysqlUtil().database;
+			String user = PropertyUtil.getMysqlUtil().user;
+			String password = PropertyUtil.getMysqlUtil().password;
 			
 			String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useUnicode=true&characterEncoding=utf8";
 			connection = DriverManager.getConnection(url, user, password);

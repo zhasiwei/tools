@@ -11,23 +11,10 @@ import java.util.Map;
 
 public class CommonUtil {
 	
-	private static Map<String, String> PROPERTYMAP = null;
-	
-	private static Map<String, String> SQL_PROPERTYMAP = null;
-	
 	private static Map<String, String> FK_RELA_MAP = new HashMap<String, String>();
-	
-	private static String FILE_NAME = "application.properties";
 	
 	private static String FILE_PREFIX = null;
 	
-	public static Map<String, String> getPropertyMap(){
-		if(CommonUtil.isEmpty(PROPERTYMAP)) {
-			initPropertyMap();
-		}
-		return PROPERTYMAP;
-	}
-
 	public static Map<String, String> getFKMap() throws SQLException{
 		synchronized (FK_RELA_MAP) {
 			if(CommonUtil.isEmpty(FK_RELA_MAP)) {
@@ -35,58 +22,6 @@ public class CommonUtil {
 			}
 		}
 		return FK_RELA_MAP;
-	}
-	
-	public static Map<String, String> getSQLPropertyMap() throws SQLException{
-		if(CommonUtil.isEmpty(SQL_PROPERTYMAP)) {
-			initPropertyMap();
-		}
-		return SQL_PROPERTYMAP;
-	}
-	private static void initPropertyMap() {
-		PROPERTYMAP = new HashMap<String, String>();
-		SQL_PROPERTYMAP = new HashMap<String, String>();
-//		initFilePrefix();
-//		String filePath = CommonUtil.class.getResource(FILE_NAME).getPath();
-		System.out.println("==========================初始化配置文件==========================");
-		System.out.println("==========================文件路径：" + FILE_NAME + "==========================");
-	
-		File file = new File(FILE_NAME);
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(file));
-			String str = null;
-			String[] strArry;
-			String tableName = null;
-			String sql = null;
-			int count = 0;
-			while((str = br.readLine()) != null) {
-				if(!str.startsWith("#")) {
-					//解析文件
-					if(CommonUtil.isEmpty(str)) {
-						continue;
-					}
-					if(!str.startsWith("$")) {
-						strArry = str.split("=");
-						PROPERTYMAP.put(strArry[0].trim(), strArry[1].trim());
-					}
-					// 解析sql
-					else {
-						if(count%2 == 0) {
-							tableName = str;
-							count++;
-						}else if(count % 2 == 1) {
-							sql = str;
-							SQL_PROPERTYMAP.put(tableName.substring(1).trim(), sql.substring(1).trim());
-							count = 0;
-						}
-					}
-				}
-			}
-			System.out.println("==========================初始化配置文件完成==========================");
-		} catch (Exception e) {
-			System.out.println("读取配置文件失败");
-			e.printStackTrace();
-		}
 	}
 	
 	// 初始化文件路径前缀

@@ -18,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
 import com.zsw.tools.mysqlData.MysqlConnect;
+import com.zsw.tools.utils.data.TableBean;
 
 public class DataSourceUtil implements javax.sql.DataSource{
 
@@ -31,8 +32,7 @@ public class DataSourceUtil implements javax.sql.DataSource{
 	public Connection getConnection() {
 		if(pool.isEmpty()) {
 			
-			String configCount = CommonUtil.getPropertyMap().get("mysql.connection_max_count");
-			int count = Integer.parseInt(CommonUtil.isEmpty(configCount) ? "5" : configCount);
+			int count = PropertyUtil.getMysqlUtil().connectionMaxCount;
 			for(int i = 0; i < count; i++) {
 				   Connection conn = MysqlConnect.getConnection();
 				   pool.add(conn);
@@ -120,8 +120,9 @@ public class DataSourceUtil implements javax.sql.DataSource{
 	 * 		4.将原数据的id和insert语句录入临时表中
 	 * @throws SQLException 
 	 */
-	public static void prepareAndBackTableData(String tableName, String querySql) throws SQLException {
-		
+	public static void prepareAndBackTableData(TableBean table) throws SQLException {
+		String tableName = table.getTargeTableName();
+		String querySql = table.getQuerySql();
 		String tempName = new DataSourceUtil().createTable(tableName);
 		
 		List<String> insertSqlList = new ArrayList<String>();
@@ -151,15 +152,15 @@ public class DataSourceUtil implements javax.sql.DataSource{
 			if(CommonUtil.isNotEmpty(querySql)) {
 				boolean flag = true;
 				String index = "0";
-				String size = CommonUtil.getPropertyMap().get("mysql.onceQueryCount");
-				size = CommonUtil.isEmpty(size) ? "5000" : size;
+//				String size = CommonUtil.getPropertyMap().get("mysql.onceQueryCount");
+				int size = PropertyUtil.getMysqlUtil().onceQueryCount;
 				PreparedStatement ps = null;
 				ResultSet rs  = null;
 				while(flag) {
 					String realSql = querySql;
 					if(querySql.indexOf("limit") == -1) {
 						realSql += " limit " + index + "," + size;
-						index = Integer.parseInt(index) + Integer.parseInt(size) + "";
+						index = Integer.parseInt(index) + size + "";
 					}
 					System.out.println("===准备删除数据以及备份删除数据，当前sql为：" + realSql);
 					ps = conn.prepareStatement(realSql);
@@ -236,8 +237,7 @@ public class DataSourceUtil implements javax.sql.DataSource{
 		// 每次查询固定条数，进行删除
 		boolean flag = true;
 		String index = "0";
-		String size = CommonUtil.getPropertyMap().get("mysql.onceQueryCount");
-		size = CommonUtil.isEmpty(size) ? "5000" : size;
+		int size =  PropertyUtil.getMysqlUtil().onceQueryCount;
 		String querySql = "select * from " + tempTableName + " where state='I'";
 		PreparedStatement ps = null;
 		ResultSet rs  = null;
@@ -249,7 +249,7 @@ public class DataSourceUtil implements javax.sql.DataSource{
 			String realSql = querySql;
 			if(querySql.indexOf("limit") == -1) {
 				realSql += " limit " + index + "," + size;
-				index = Integer.parseInt(index) + Integer.parseInt(size) + "";
+				index = Integer.parseInt(index) + size + "";
 			}
 			ps = conn.prepareStatement(realSql);
 			rs = ps.executeQuery();

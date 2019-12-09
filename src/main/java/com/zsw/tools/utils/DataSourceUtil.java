@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
@@ -31,15 +32,17 @@ public class DataSourceUtil implements javax.sql.DataSource{
 	 
 	@Override
 	public Connection getConnection() {
-		if(pool.isEmpty()) {
-			
-			int count = PropertyUtil.getMysqlUtil().connectionMaxCount;
-			for(int i = 0; i < count; i++) {
-				   Connection conn = MysqlConnect.getConnection();
-				   pool.add(conn);
-		      }
+		synchronized (pool) {
+			if(pool.isEmpty()) {
+				
+				int count = PropertyUtil.getMysqlUtil().connectionMaxCount;
+				for(int i = 0; i < count; i++) {
+					Connection conn = MysqlConnect.getConnection();
+					pool.add(conn);
+				}
+			}
+			conn = pool.removeFirst();
 		}
-		conn = pool.removeFirst();
 		return conn;
 	}
 	
@@ -144,8 +147,10 @@ public class DataSourceUtil implements javax.sql.DataSource{
 		List<String> insertSqlList = new ArrayList<String>();
 		List<String> deleteSqlList = new ArrayList<String>();
 		List<String> idList = new ArrayList<String>();
-		
-		Map<String, String> fkMap = CommonUtil.getFKMap();
+		Map<String, String> fkMap = new HashMap<String, String>();
+		if(PropertyUtil.getMysqlUtil().fkCheck) {
+			fkMap = CommonUtil.getFKMap();
+		}
 		List<String> columnNameList = getColumnNameList(tableName);
 		// 准备插入insert语句
 		String insertSql = "insert into " + tableName;
@@ -214,16 +219,17 @@ public class DataSourceUtil implements javax.sql.DataSource{
 					}
 					
 					// 插入临时备份表
-					String dataSql = "insert into " + tempName + "(id, insertSql, deleteSql,state, fk_table_name) values(?,?,?,?,?)"; 
+					String dataSql = "insert into " + tempName + "(id,targe_table_id, insertSql, deleteSql,state, fk_table_name) values(?,?,?,?,?,?)"; 
 					PreparedStatement pss = conn.prepareStatement(dataSql);
 					conn.setAutoCommit(false);
 
 					for(int i=0;i<idList.size();i++) {
-						pss.setString(1, idList.get(i));
-						pss.setString(2, insertSqlList.get(i));
-						pss.setString(3, deleteSqlList.get(i));
-						pss.setString(4, "I");
-						pss.setString(5, fkMap.get(tableName));
+						pss.setString(1, UUID.randomUUID() + "");
+						pss.setString(2, idList.get(i));
+						pss.setString(3, insertSqlList.get(i));
+						pss.setString(4, deleteSqlList.get(i));
+						pss.setString(5, "I");
+						pss.setString(6, fkMap.get(tableName));
 						pss.addBatch();
 					}
 					pss.executeBatch();
@@ -323,7 +329,8 @@ public class DataSourceUtil implements javax.sql.DataSource{
 		
 		String tempName = TEMP_TABLE_NAME_PREFIX + tableName;
 		String sql = "CREATE TABLE IF NOT EXISTS `" + tempName +"`  (\r\n" + 
-				"  `id` varchar(32) NOT NULL,\r\n" + 
+				"  `id` varchar(128) NOT NULL,\r\n" + 
+				"  `targe_table_id` varchar(128) NOT NULL,\r\n" + 
 				"  `insertSql` text NULL,\r\n" + 
 				"  `deleteSql` text NULL,\r\n" + 
 				"  `state` varchar(1) NULL,\r\n" + 

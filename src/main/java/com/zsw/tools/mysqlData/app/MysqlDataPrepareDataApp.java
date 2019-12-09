@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.mysql.cj.x.protobuf.MysqlxPrepare.PrepareOrBuilder;
 import com.zsw.tools.utils.CommonUtil;
 import com.zsw.tools.utils.DataSourceUtil;
 import com.zsw.tools.utils.PropertyUtil;
@@ -33,14 +32,16 @@ public class MysqlDataPrepareDataApp {
 		ExecutorService executor = Executors.newFixedThreadPool(count);
 		for(TableBean table :tableBeanList) {
 			 executor.submit(() -> {
-	                System.out.println("thread id is: " + Thread.currentThread().getId());
+	                System.out.println(table.getTargeTableName() + "thread id is: " + Thread.currentThread().getId());
              	try {
 						DataSourceUtil.prepareAndBackTableData(table);
 					} catch (SQLException e) {
 						e.printStackTrace();
 					}
+             		System.out.println(table.getTargeTableName() + "END thread id is: " + Thread.currentThread().getId());
 	            });
 		}
+		executor.shutdown();
 //		sqlMap.forEach((key, value) ->{
 //			 executor.submit(() -> {
 //	                System.out.println("thread id is: " + Thread.currentThread().getId());
